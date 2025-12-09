@@ -167,12 +167,11 @@
         padding: 1rem;
       }
 
-      /* 修正: グリッドのカラム定義を変更 */
-      /* [射位] [名前] [内訳スコア] [個人計] */
       .member-row {
         display: grid;
-        grid-template-columns: 30px 1fr 80px 30px; /* 内訳用に幅を確保 */
-        gap: 5px;
+        /* 変更: 内訳エリア(125px)と合計エリア(50px)を広げました */
+        grid-template-columns: 30px 1fr 125px 50px;
+        gap: 4px;
         padding: 0.6rem 0;
         border-bottom: 1px dashed #eee;
         align-items: center;
@@ -203,17 +202,25 @@
         background-color: #ef5350;
       } /* Ochi */
 
+      /* 名前が長すぎる場合の処理 */
       .player-name {
         font-size: 0.95rem;
-        /* 名前が長い場合に省略記号(...)を出す処理 */
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        padding-right: 5px;
       }
-
+      .score-details {
+        font-size: 0.7rem;
+        color: #666;
+        text-align: right;
+        white-space: nowrap; /* 折り返し防止 */
+      }
       .player-score {
         font-weight: bold;
         text-align: right;
+        font-size: 1rem;
+        color: var(--text-color);
       }
 
       /* --- Footer --- */
@@ -276,80 +283,22 @@
     <footer>&copy; 2025 Mentai-ko Cup Committee. All rights reserved.</footer>
 
     <script>
-      /**
-       * Mock Data: 本来はスプレッドシート(JSON)から取得するデータ構造
-       * UI/UX: 3人1組のデータ構造に整形済みと仮定
-       */
-      const mockData = [
-        {
-          rank: 1,
-          teamName: '博多弓道クラブA',
-          totalScore: 28,
-          members: [
-            {
-              position: '大前',
-              posClass: 'pos-1',
-              name: '佐藤 健一',
-              score: 10,
-            },
-            { position: '中', posClass: 'pos-2', name: '鈴木 雅之', score: 9 },
-            { position: '落', posClass: 'pos-3', name: '高橋 徹', score: 9 },
-          ],
-        },
-        {
-          rank: 2,
-          teamName: '天神実業高校',
-          totalScore: 25,
-          members: [
-            {
-              position: '大前',
-              posClass: 'pos-1',
-              name: '田中 優子',
-              score: 8,
-            },
-            { position: '中', posClass: 'pos-2', name: '山本 香織', score: 8 },
-            { position: '落', posClass: 'pos-3', name: '中村 晋', score: 9 },
-          ],
-        },
-        {
-          rank: 3,
-          teamName: '中洲産業大学',
-          totalScore: 22,
-          members: [
-            {
-              position: '大前',
-              posClass: 'pos-1',
-              name: '鬼瓦 権造',
-              score: 6,
-            },
-            {
-              position: '中',
-              posClass: 'pos-2',
-              name: '明太子 太郎',
-              score: 8,
-            },
-            { position: '落', posClass: 'pos-3', name: '博多 花子', score: 8 },
-          ],
-        },
-        {
-          rank: 4,
-          teamName: '春日市民弓道場',
-          totalScore: 18,
-          members: [
-            { position: '大前', posClass: 'pos-1', name: '西郷 隆', score: 5 },
-            { position: '中', posClass: 'pos-2', name: '大久保 利', score: 6 },
-            { position: '落', posClass: 'pos-3', name: '木戸 孝', score: 7 },
-          ],
-        },
-      ];
-
       // エラーログを収集するためのラッパー関数
       function logError(message, details = null) {
         console.error(`[Tournament App Error]: ${message}`, details);
         // 必要であればここに管理者に通知を送る処理を追加可能
       }
 
-      // チームカードのHTMLを生成する関数
+      // ヘルパー関数: 数値なら「中」をつける、それ以外（ハイフンなど）ならそのまま返す
+      function formatScore(value) {
+        // valueが数値、もしくは数字の文字列なら "中" をつける
+        if (value !== '-' && value !== '' && !isNaN(value)) {
+          return `${value}中`;
+        }
+        return value; // "-" などの場合はそのまま返す
+      }
+
+      // チームカードのHTMLを生成する関数（修正版）
       function createTeamCard(team) {
         try {
           const rankClass = team.rank <= 3 ? `rank-${team.rank}` : '';
@@ -365,12 +314,14 @@
                     <span class="player-name">${member.name}</span>
 
                     <span class="score-details">
-                        ${member.details.s1}-${member.details.s2}-${
-                member.details.s3
-              }
+                        ${formatScore(member.details.s1)} - ${formatScore(
+                member.details.s2
+              )} - ${formatScore(member.details.s3)}
                     </span>
 
-                    <span class="player-score">${member.score}</span>
+                    <span class="player-score">${formatScore(
+                      member.score
+                    )}</span>
                 </div>
             `
             )
@@ -393,7 +344,6 @@
           return '';
         }
       }
-
       // メイン描画処理
       async function initApp() {
         const appContainer = document.getElementById('app');
