@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>成績入力 - 第4回めんたいこ杯</title>
+    <title>チーム成績入力 - めんたいカップ</title>
     <style>
       /* --- CSS Reset & Variables (OKLCH Ice Theme) --- */
       :root {
@@ -12,7 +12,7 @@
         --bg-color: oklch(90% 0.01 80);
         --white: oklch(98% 0.005 80);
         --text-color: oklch(30% 0.02 240);
-        --gray: oklch(65% 0.02 240); /* 薄めのグレー */
+        --gray: oklch(65% 0.02 240);
         --font-main: 'Helvetica Neue', Arial, sans-serif;
       }
 
@@ -28,7 +28,6 @@
         padding-bottom: 50px;
       }
 
-      /* Header */
       header {
         background: var(--primary-color);
         color: var(--white);
@@ -42,7 +41,6 @@
         font-size: 1.2rem;
       }
 
-      /* Tabs */
       .tabs {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
@@ -65,39 +63,54 @@
         background: oklch(96% 0.01 185);
       }
 
-      /* List Area */
       .player-list {
         max-width: 800px;
         margin: 1rem auto;
         padding: 0 1rem;
       }
 
-      /* Team Separator */
-      .team-header {
-        margin-top: 1.5rem;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-        font-weight: bold;
-        color: var(--primary-color);
-        border-left: 4px solid var(--accent-color);
-        padding-left: 10px;
+      /* チーム単位のカードスタイルに変更 */
+      .team-card-input {
+        background: var(--white);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        border-left: 5px solid var(--accent-color);
+        cursor: pointer; /* クリック可能を示唆 */
+        transition: transform 0.1s;
+      }
+      .team-card-input:active {
+        transform: scale(0.99);
+        background: #f0f0f0;
       }
 
-      /* Player Item */
-      .player-item {
-        background: var(--white);
-        padding: 1rem;
-        margin-bottom: 0.5rem;
-        border-radius: 8px;
+      .team-header-row {
+        padding: 0.8rem 1rem;
+        background: rgba(0, 0, 0, 0.02);
+        font-weight: bold;
+        color: var(--primary-color);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        cursor: pointer; /* Clickable */
-        transition: background 0.1s;
       }
-      .player-item:active {
-        background: #eee;
+      .edit-icon {
+        font-size: 0.8rem;
+        background: var(--primary-color);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 10px;
+      }
+
+      .player-row {
+        padding: 0.8rem 1rem;
+        border-bottom: 1px dashed #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .player-row:last-child {
+        border-bottom: none;
       }
 
       .p-info {
@@ -111,6 +124,8 @@
         padding: 2px 6px;
         border-radius: 4px;
         background: var(--gray);
+        min-width: 25px;
+        text-align: center;
       }
       .pos-1 {
         background-color: oklch(65% 0.08 190);
@@ -122,23 +137,16 @@
         background-color: oklch(65% 0.1 40);
       }
 
-      .p-name {
-        font-weight: bold;
-      }
-
       .p-score {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: bold;
-        color: var(--accent-color);
-        min-width: 40px;
-        text-align: right;
+        color: var(--text-color);
       }
       .p-score.empty {
-        color: var(--gray);
-        font-size: 0.9rem;
+        color: #ccc;
       }
 
-      /* Modal */
+      /* モーダル (3人入力用) */
       .modal-overlay {
         position: fixed;
         top: 0;
@@ -161,52 +169,88 @@
 
       .modal-card {
         background: var(--white);
-        width: 90%;
-        max-width: 400px;
+        width: 95%;
+        max-width: 500px;
         border-radius: 12px;
         padding: 1.5rem;
-        text-align: center;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        max-height: 90vh;
+        overflow-y: auto;
       }
 
       .modal-title {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         font-size: 1.1rem;
-        color: var(--text-color);
-      }
-      .modal-buttons {
-        display: grid;
-        gap: 10px;
-        /* JSで列数を変更する */
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .score-btn {
-        padding: 1rem;
-        font-size: 1.5rem;
-        font-weight: bold;
-        border: 2px solid var(--primary-color);
-        background: var(--white);
         color: var(--primary-color);
-        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 0.5rem;
+      }
+
+      /* モーダル内の各選手行 */
+      .input-row {
+        margin-bottom: 1.5rem;
+      }
+      .input-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+        font-size: 0.95rem;
+      }
+
+      /* ボタン群 */
+      .btn-group {
+        display: flex;
+        gap: 5px;
+        justify-content: space-between;
+      }
+      .score-select-btn {
+        flex: 1;
+        padding: 0.8rem 0;
+        border: 1px solid #ddd;
+        background: #fff;
+        border-radius: 6px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: var(--gray);
         cursor: pointer;
       }
-      .score-btn:active {
+      /* 選択されたボタン */
+      .score-select-btn.selected {
         background: var(--primary-color);
-        color: var(--white);
-      }
-
-      .close-btn {
-        margin-top: 1.5rem;
-        padding: 0.5rem 2rem;
-        background: var(--gray);
         color: white;
-        border: none;
-        border-radius: 20px;
-        cursor: pointer;
+        border-color: var(--primary-color);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
       }
 
-      /* Loading Spinner */
+      /* アクションボタン */
+      .modal-actions {
+        margin-top: 2rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .action-btn {
+        padding: 1rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 1rem;
+      }
+      .btn-cancel {
+        background: #eee;
+        color: #666;
+      }
+      .btn-save {
+        background: var(--accent-color);
+        color: white;
+      }
+
+      /* Loading */
       #loading-overlay {
         position: fixed;
         top: 0;
@@ -215,6 +259,7 @@
         height: 100%;
         background: rgba(255, 255, 255, 0.8);
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         z-index: 200;
@@ -227,6 +272,11 @@
         border-top: 4px solid var(--primary-color);
         border-radius: 50%;
         animation: spin 1s linear infinite;
+      }
+      .loading-text {
+        margin-top: 10px;
+        font-weight: bold;
+        color: var(--primary-color);
       }
       @keyframes spin {
         0% {
@@ -255,35 +305,45 @@
 
     <div id="modal" class="modal-overlay">
       <div class="modal-card">
-        <h3 id="modal-player-name" class="modal-title">選手名</h3>
-        <div id="modal-btns" class="modal-buttons"></div>
-        <button class="close-btn" onclick="closeModal()">キャンセル</button>
+        <h3 id="modal-team-name" class="modal-title">チーム名</h3>
+        <div id="modal-inputs-container"></div>
+        <div class="modal-actions">
+          <button class="action-btn btn-cancel" onclick="closeModal()">
+            キャンセル
+          </button>
+          <button class="action-btn btn-save" onclick="submitTeamScores()">
+            一括保存
+          </button>
+        </div>
       </div>
     </div>
 
-    <div id="loading-overlay"><div class="spinner"></div></div>
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <div id="loading-msg" class="loading-text">送信中...</div>
+    </div>
 
     <script>
-      // ★ GASのURL (index.htmlと同じものを使用)
-      const API_URL =
-        'https://script.google.com/macros/s/AKfycbxM8Bfr9i8uQVFp0NSjluD3pIRyDgS1Yi999rGG30dmiz6zUyMeGkzF41XefC6cQQ1XQA/exec';
+      // ★ GASのウェブアプリURLをここに貼ってください
+      const API_URL = 'https://script.google.com/macros/s/あなたのID/exec';
 
-      // 状態管理
-      let allData = []; // 取得した全データ
-      let currentTab = 's1'; // 現在のタブ (s1, s2, s3)
-      let selectedPlayer = null; // 選択中の選手データ
-      // グローバル変数として合言葉を保持
+      let allData = [];
+      let currentTab = 's1';
+      let selectedTeam = null; // 選択中のチーム
+      let tempScores = {}; // 入力中のスコア一時保存用 { "選手名": 点数 }
       let authKey = '';
-      // タブごとの設定
+
       const tabConfig = {
         s1: { label: '1手目', max: 2 },
         s2: { label: '午前の立', max: 4 },
         s3: { label: '午後の立', max: 4 },
       };
 
-      // 初期化
       async function init() {
-        showLoading(true);
+        authKey = prompt('管理者用パスワードを入力してください', '');
+        if (!authKey) alert('パスワードがないため、閲覧モードになります');
+
+        showLoading(true, 'データを読み込んでいます...');
         try {
           const res = await fetch(API_URL);
           const json = await res.json();
@@ -295,60 +355,49 @@
           }
         } catch (e) {
           console.error(e);
-          alert('通信エラーが発生しました');
+          alert('通信エラー');
         }
         showLoading(false);
-        // ★追加：ページを開いた時に合言葉を聞く
-        authKey = prompt('管理者用パスワードを入力してください', '');
-        if (!authKey) {
-          alert(
-            'パスワードがないため、閲覧モードになります（入力はできません）'
-          );
-        }
       }
 
-      // タブ切り替え
       window.switchTab = function (tabKey) {
         currentTab = tabKey;
-
-        // タブの見た目更新
         document
           .querySelectorAll('.tab-btn')
           .forEach((btn) => btn.classList.remove('active'));
         event.target.classList.add('active');
-
         renderList();
       };
 
-      // リスト描画
+      // ★チーム単位でリストを表示
       function renderList() {
         const container = document.getElementById('list-container');
         container.innerHTML = '';
 
-        // 立順(teamID順)にソートされている前提
-        // チームごとに回すのではなく、フラットなリストとして表示するが、チームヘッダーを入れる
-
         allData.forEach((team) => {
-          // チームヘッダー
-          const teamHeader = document.createElement('div');
-          teamHeader.className = 'team-header';
-          teamHeader.textContent = `${team.teamName} (立順:${
-            team.rank || '-'
-          })`; // rankは順位だが..まあよしとする
-          // 立順データがあればそれを使いたいが、JSON構造上 team.members が主
-          container.appendChild(teamHeader);
+          // チームカードを作成
+          const card = document.createElement('div');
+          card.className = 'team-card-input';
 
+          // チーム名ヘッダー
+          const header = document.createElement('div');
+          header.className = 'team-header-row';
+          header.innerHTML = `
+                <span>${team.teamName}</span>
+                <span class="edit-icon">入力する</span>
+            `;
+          card.appendChild(header);
+
+          // メンバー行（表示のみ）
           team.members.forEach((member) => {
-            const row = document.createElement('div');
-            row.className = 'player-item';
-
-            // 現在のスコアを取得
             let score = member.details[currentTab];
             if (score === null || score === '') score = '-';
 
             const scoreClass = score === '-' ? 'empty' : '';
             const displayScore = score === '-' ? '未' : `${score}中`;
 
+            const row = document.createElement('div');
+            row.className = 'player-row';
             row.innerHTML = `
                     <div class="p-info">
                         <span class="p-pos ${
@@ -358,113 +407,186 @@
                     </div>
                     <div class="p-score ${scoreClass}">${displayScore}</div>
                 `;
-
-            // クリックイベント
-            row.onclick = () => openModal(team.id, member);
-            container.appendChild(row);
+            card.appendChild(row);
           });
+
+          // カード全体をクリックしたらモーダルを開く
+          card.onclick = () => openTeamModal(team);
+          container.appendChild(card);
         });
       }
 
-      // モーダルを開く
-      function openModal(teamId, member) {
-        selectedPlayer = { teamId: teamId, ...member };
+      // ★3人入力用モーダルを開く
+      function openTeamModal(team) {
+        selectedTeam = team;
+        tempScores = {}; // リセット
 
         document.getElementById(
-          'modal-player-name'
-        ).textContent = `${member.name} (${tabConfig[currentTab].label})`;
-        const btnContainer = document.getElementById('modal-btns');
-        btnContainer.innerHTML = '';
+          'modal-team-name'
+        ).textContent = `${team.teamName} (${tabConfig[currentTab].label})`;
+        const container = document.getElementById('modal-inputs-container');
+        container.innerHTML = '';
 
-        // ボタンの最大値(2 or 4)に合わせて生成
         const maxScore = tabConfig[currentTab].max;
 
-        // グリッドのカラム数を調整（3つボタンなら3列、5つなら3列で折り返し）
-        btnContainer.style.gridTemplateColumns =
-          maxScore === 2 ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)';
+        // メンバーごとにループして入力欄を作る
+        team.members.forEach((member) => {
+          // 現在のスコアを取得（初期値）
+          let currentVal = member.details[currentTab];
+          // 数値でなければ null扱い
+          if (currentVal === '-' || currentVal === '') currentVal = null;
+          else currentVal = Number(currentVal);
 
-        for (let i = 0; i <= maxScore; i++) {
-          const btn = document.createElement('button');
-          btn.className = 'score-btn';
-          btn.textContent = i;
-          btn.onclick = () => submitScore(i);
-          btnContainer.appendChild(btn);
-        }
+          // 一時保存にもセット
+          tempScores[member.name] = currentVal;
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'input-row';
+
+          // 名前ラベル
+          const label = document.createElement('div');
+          label.className = 'input-label';
+          label.innerHTML = `<span class="p-pos ${
+            member.posClass
+          }">${member.position.charAt(0)}</span> ${member.name}`;
+          wrapper.appendChild(label);
+
+          // ボタン群
+          const btnGroup = document.createElement('div');
+          btnGroup.className = 'btn-group';
+
+          for (let i = 0; i <= maxScore; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'score-select-btn';
+            if (currentVal === i) btn.classList.add('selected'); // 初期値選択
+            btn.textContent = i;
+
+            // ボタンクリック時
+            btn.onclick = (e) => {
+              // 他のボタンの選択を外す
+              const parent = e.target.parentNode;
+              Array.from(parent.children).forEach((b) =>
+                b.classList.remove('selected')
+              );
+              // 自分を選択
+              e.target.classList.add('selected');
+              // スコア記録
+              tempScores[member.name] = i;
+            };
+
+            btnGroup.appendChild(btn);
+          }
+          wrapper.appendChild(btnGroup);
+          container.appendChild(wrapper);
+        });
 
         document.getElementById('modal').classList.add('open');
       }
 
-      // モーダルを閉じる
       window.closeModal = function () {
         document.getElementById('modal').classList.remove('open');
-        selectedPlayer = null;
+        selectedTeam = null;
       };
 
-      // スコア送信処理（修正版）
-      async function submitScore(score) {
-        // 1. 念のためのチェック
-        if (!selectedPlayer) return;
-
-        // ★修正ポイント1：モーダルを閉じる前に、送信データ(payload)を作る
-        // (閉じてしまうと selectedPlayer が null になってしまうため)
-        const payload = {
-          id: selectedPlayer.teamId,
-          name: selectedPlayer.name,
-          target: currentTab,
-          score: score,
-          authKey: authKey, // ← ★ここが重要！この行がないと認証エラーになります};
-        };
-        // 2. ローディング開始
-        showLoading(true);
-
-        // ★修正ポイント2：データを作り終わってから閉じる
-        closeModal();
-
-        try {
-          // POSTリクエスト
-          const res = await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          });
-
-          const json = await res.json();
-
-          if (json.status === 'success') {
-            // 成功したら手元のデータを更新して再描画
-            updateLocalData(payload.id, payload.name, payload.target, score);
-          } else {
-            alert('保存に失敗しました: ' + json.message);
-          }
-        } catch (e) {
-          console.error(e);
-          alert('送信エラー。通信環境を確認してください。');
+      // ★一括保存処理
+      async function submitTeamScores() {
+        if (!authKey) {
+          alert('パスワード未入力のため保存できません。');
+          return;
         }
 
-        // 3. ローディング終了
+        // 入力されているスコアだけ抽出して送信リストを作る
+        const updates = [];
+        selectedTeam.members.forEach((member) => {
+          const val = tempScores[member.name];
+          // null(未選択)でなければ送信対象にする
+          if (val !== null && val !== undefined) {
+            updates.push({
+              id: selectedTeam.id,
+              name: member.name,
+              target: currentTab,
+              score: val,
+              authKey: authKey,
+            });
+          }
+        });
+
+        if (updates.length === 0) {
+          closeModal();
+          return;
+        }
+
+        showLoading(true, '保存中(0/' + updates.length + ')...');
+        closeModal(); // 先に閉じる
+
+        // ★重要: 1件ずつ順番に送信する (GASのロック競合を防ぐため)
+        let successCount = 0;
+        let errorOccurred = false;
+
+        for (let i = 0; i < updates.length; i++) {
+          updateLoadingMsg(`保存中(${i + 1}/${updates.length})...`);
+
+          try {
+            const payload = updates[i];
+            const res = await fetch(API_URL, {
+              method: 'POST',
+              body: JSON.stringify(payload),
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            });
+            const json = await res.json();
+
+            if (json.status === 'success') {
+              // ローカルデータ更新
+              updateLocalData(
+                payload.id,
+                payload.name,
+                payload.target,
+                payload.score
+              );
+              successCount++;
+            } else {
+              console.error('Save failed for ' + payload.name, json.message);
+              errorOccurred = true;
+            }
+          } catch (e) {
+            console.error(e);
+            errorOccurred = true;
+          }
+        }
+
         showLoading(false);
+
+        if (errorOccurred) {
+          alert(
+            `完了しましたが、いくつかのデータ保存に失敗しました。\n成功: ${successCount} / ${updates.length}\n画面を確認してください。`
+          );
+        } else {
+          // alert("保存しました"); // いちいち出すとウザいので省略しても良い
+        }
+
+        // リスト再描画
+        renderList();
       }
-      // ローカルデータの更新（表示用）
+
       function updateLocalData(tid, pname, target, val) {
-        // allDataの中から該当選手を探して書き換え
         const team = allData.find((t) => t.id === tid);
         if (team) {
           const mem = team.members.find((m) => m.name === pname);
-          if (mem) {
-            mem.details[target] = val;
-            // 必要なら合計点も再計算するロジックをここに書けるが、今回は省略
-            renderList();
-          }
+          if (mem) mem.details[target] = val;
         }
       }
 
-      function showLoading(show) {
-        document.getElementById('loading-overlay').style.display = show
-          ? 'flex'
-          : 'none';
+      function showLoading(show, msg = '') {
+        const el = document.getElementById('loading-overlay');
+        const txt = document.getElementById('loading-msg');
+        el.style.display = show ? 'flex' : 'none';
+        if (msg) txt.textContent = msg;
       }
 
-      // 開始
+      function updateLoadingMsg(msg) {
+        document.getElementById('loading-msg').textContent = msg;
+      }
+
       init();
     </script>
   </body>
