@@ -491,6 +491,17 @@
 
       // ★一括保存処理
       async function submitTeamScores() {
+        // --- ⬇︎ 追加ここから ⬇︎ ---
+        // テスト用：送ろうとしているパスワードを画面に出す
+        console.log('現在のパスワード変数:', authKey);
+        if (!authKey) {
+          alert(
+            'エラー: パスワード変数が空です。リロードして入力し直してください。'
+          );
+          return;
+        }
+        // --- ⬆︎ 追加ここまで ⬆︎ ---
+
         if (!authKey) {
           alert('パスワード未入力のため保存できません。');
           return;
