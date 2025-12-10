@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>成績入力 - 第4回めんたいこ杯</title>
+    <style>
+      /* --- CSS Reset & Variables (OKLCH Ice Theme) --- */
+      :root {
+        --primary-color: oklch(40% 0.06 185);
+        --accent-color: oklch(60% 0.12 35);
+        --bg-color: oklch(90% 0.01 80);
+        --white: oklch(98% 0.005 80);
+        --text-color: oklch(30% 0.02 240);
+        --gray: oklch(65% 0.02 240); /* 薄めのグレー */
+        --font-main: 'Helvetica Neue', Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: var(--font-main);
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        padding-bottom: 50px;
+      }
+
+      /* Header */
+      header {
+        background: var(--primary-color);
+        color: var(--white);
+        padding: 1rem;
+        text-align: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      header h1 {
+        font-size: 1.2rem;
+      }
+
+      /* Tabs */
+      .tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        background: var(--white);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      .tab-btn {
+        padding: 1rem 0;
+        border: none;
+        background: transparent;
+        font-weight: bold;
+        color: var(--gray);
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab-btn.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+        background: oklch(96% 0.01 185);
+      }
+
+      /* List Area */
+      .player-list {
+        max-width: 800px;
+        margin: 1rem auto;
+        padding: 0 1rem;
+      }
+
+      /* Team Separator */
+      .team-header {
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        border-left: 4px solid var(--accent-color);
+        padding-left: 10px;
+      }
+
+      /* Player Item */
+      .player-item {
+        background: var(--white);
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        cursor: pointer; /* Clickable */
+        transition: background 0.1s;
+      }
+      .player-item:active {
+        background: #eee;
+      }
+
+      .p-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .p-pos {
+        font-size: 0.7rem;
+        color: #fff;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: var(--gray);
+      }
+      .pos-1 {
+        background-color: oklch(65% 0.08 190);
+      }
+      .pos-2 {
+        background-color: oklch(65% 0.03 240);
+      }
+      .pos-3 {
+        background-color: oklch(65% 0.1 40);
+      }
+
+      .p-name {
+        font-weight: bold;
+      }
+
+      .p-score {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: var(--accent-color);
+        min-width: 40px;
+        text-align: right;
+      }
+      .p-score.empty {
+        color: var(--gray);
+        font-size: 0.9rem;
+      }
+
+      /* Modal */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+      .modal-overlay.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .modal-card {
+        background: var(--white);
+        width: 90%;
+        max-width: 400px;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .modal-title {
+        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+        color: var(--text-color);
+      }
+      .modal-buttons {
+        display: grid;
+        gap: 10px;
+        /* JSで列数を変更する */
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .score-btn {
+        padding: 1rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+        border: 2px solid var(--primary-color);
+        background: var(--white);
+        color: var(--primary-color);
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .score-btn:active {
+        background: var(--primary-color);
+        color: var(--white);
+      }
+
+      .close-btn {
+        margin-top: 1.5rem;
+        padding: 0.5rem 2rem;
+        background: var(--gray);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+      }
+
+      /* Loading Spinner */
+      #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 200;
+        display: none;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--gray);
+        border-top: 4px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>成績入力システム</h1>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('s1')">1手目</button>
+      <button class="tab-btn" onclick="switchTab('s2')">午前の立</button>
+      <button class="tab-btn" onclick="switchTab('s3')">午後の立</button>
+    </div>
+
+    <main id="list-container" class="player-list">
+      <div style="text-align: center; padding: 2rem">読み込み中...</div>
+    </main>
+
+    <div id="modal" class="modal-overlay">
+      <div class="modal-card">
+        <h3 id="modal-player-name" class="modal-title">選手名</h3>
+        <div id="modal-btns" class="modal-buttons"></div>
+        <button class="close-btn" onclick="closeModal()">キャンセル</button>
+      </div>
+    </div>
+
+    <div id="loading-overlay"><div class="spinner"></div></div>
+
+    <script>
+      // ★ GASのURL (index.htmlと同じものを使用)
+      const API_URL =
+        'https://script.google.com/macros/s/AKfycbxM8Bfr9i8uQVFp0NSjluD3pIRyDgS1Yi999rGG30dmiz6zUyMeGkzF41XefC6cQQ1XQA/exec';
+
+      // 状態管理
+      let allData = []; // 取得した全データ
+      let currentTab = 's1'; // 現在のタブ (s1, s2, s3)
+      let selectedPlayer = null; // 選択中の選手データ
+      // グローバル変数として合言葉を保持
+      let authKey = '';
+      // タブごとの設定
+      const tabConfig = {
+        s1: { label: '1手目', max: 2 },
+        s2: { label: '午前の立', max: 4 },
+        s3: { label: '午後の立', max: 4 },
+      };
+
+      // 初期化
+      async function init() {
+        showLoading(true);
+        try {
+          const res = await fetch(API_URL);
+          const json = await res.json();
+          if (json.status === 'success') {
+            allData = json.data;
+            renderList();
+          } else {
+            alert('データの取得に失敗しました');
+          }
+        } catch (e) {
+          console.error(e);
+          alert('通信エラーが発生しました');
+        }
+        showLoading(false);
+        // ★追加：ページを開いた時に合言葉を聞く
+        authKey = prompt('管理者用パスワードを入力してください', '');
+        if (!authKey) {
+          alert(
+            'パスワードがないため、閲覧モードになります（入力はできません）'
+          );
+        }
+      }
+
+      // タブ切り替え
+      window.switchTab = function (tabKey) {
+        currentTab = tabKey;
+
+        // タブの見た目更新
+        document
+          .querySelectorAll('.tab-btn')
+          .forEach((btn) => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        renderList();
+      };
+
+      // リスト描画
+      function renderList() {
+        const container = document.getElementById('list-container');
+        container.innerHTML = '';
+
+        // 立順(teamID順)にソートされている前提
+        // チームごとに回すのではなく、フラットなリストとして表示するが、チームヘッダーを入れる
+
+        allData.forEach((team) => {
+          // チームヘッダー
+          const teamHeader = document.createElement('div');
+          teamHeader.className = 'team-header';
+          teamHeader.textContent = `${team.teamName} (立順:${
+            team.rank || '-'
+          })`; // rankは順位だが..まあよしとする
+          // 立順データがあればそれを使いたいが、JSON構造上 team.members が主
+          container.appendChild(teamHeader);
+
+          team.members.forEach((member) => {
+            const row = document.createElement('div');
+            row.className = 'player-item';
+
+            // 現在のスコアを取得
+            let score = member.details[currentTab];
+            if (score === null || score === '') score = '-';
+
+            const scoreClass = score === '-' ? 'empty' : '';
+            const displayScore = score === '-' ? '未' : `${score}中`;
+
+            row.innerHTML = `
+                    <div class="p-info">
+                        <span class="p-pos ${
+                          member.posClass
+                        }">${member.position.charAt(0)}</span>
+                        <span class="p-name">${member.name}</span>
+                    </div>
+                    <div class="p-score ${scoreClass}">${displayScore}</div>
+                `;
+
+            // クリックイベント
+            row.onclick = () => openModal(team.id, member);
+            container.appendChild(row);
+          });
+        });
+      }
+
+      // モーダルを開く
+      function openModal(teamId, member) {
+        selectedPlayer = { teamId: teamId, ...member };
+
+        document.getElementById(
+          'modal-player-name'
+        ).textContent = `${member.name} (${tabConfig[currentTab].label})`;
+        const btnContainer = document.getElementById('modal-btns');
+        btnContainer.innerHTML = '';
+
+        // ボタンの最大値(2 or 4)に合わせて生成
+        const maxScore = tabConfig[currentTab].max;
+
+        // グリッドのカラム数を調整（3つボタンなら3列、5つなら3列で折り返し）
+        btnContainer.style.gridTemplateColumns =
+          maxScore === 2 ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)';
+
+        for (let i = 0; i <= maxScore; i++) {
+          const btn = document.createElement('button');
+          btn.className = 'score-btn';
+          btn.textContent = i;
+          btn.onclick = () => submitScore(i);
+          btnContainer.appendChild(btn);
+        }
+
+        document.getElementById('modal').classList.add('open');
+      }
+
+      // モーダルを閉じる
+      window.closeModal = function () {
+        document.getElementById('modal').classList.remove('open');
+        selectedPlayer = null;
+      };
+
+      // スコア送信処理
+      async function submitScore(score) {
+        if (!selectedPlayer) return;
+
+        // ★追加：パスワード未入力なら弾く
+        if (!authKey) {
+          alert(
+            'パスワードが入力されていません。リロードして入力してください。'
+          );
+          return;
+        }
+
+        showLoading(true);
+        closeModal();
+
+        // 送信データ
+        const payload = {
+          id: selectedPlayer.teamId,
+          name: selectedPlayer.name,
+          target: currentTab, // s1, s2, s3
+          score: score,
+          authKey: authKey, // ★追加：合言葉も一緒に送る
+        };
+
+        try {
+          // POSTリクエスト
+          // GASへのPOSTは特殊な設定が必要
+          const res = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            // CORS対策: text/plainとして送り、GAS側でJSON.parseする
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          });
+
+          const json = await res.json();
+
+          if (json.status === 'success') {
+            // 成功したら手元のデータを更新して再描画（リロードなしで高速化）
+            updateLocalData(payload.id, payload.name, payload.target, score);
+          } else {
+            alert('保存に失敗しました: ' + json.message);
+          }
+        } catch (e) {
+          console.error(e);
+          alert('送信エラー。通信環境を確認してください。');
+        }
+        showLoading(false);
+      }
+
+      // ローカルデータの更新（表示用）
+      function updateLocalData(tid, pname, target, val) {
+        // allDataの中から該当選手を探して書き換え
+        const team = allData.find((t) => t.id === tid);
+        if (team) {
+          const mem = team.members.find((m) => m.name === pname);
+          if (mem) {
+            mem.details[target] = val;
+            // 必要なら合計点も再計算するロジックをここに書けるが、今回は省略
+            renderList();
+          }
+        }
+      }
+
+      function showLoading(show) {
+        document.getElementById('loading-overlay').style.display = show
+          ? 'flex'
+          : 'none';
+      }
+
+      // 開始
+      init();
+    </script>
+  </body>
+</html>
