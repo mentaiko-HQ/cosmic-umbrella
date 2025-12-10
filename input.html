@@ -84,7 +84,17 @@
         transform: scale(0.99);
         background: #f0f0f0;
       }
-
+      /* 立順バッジのデザイン */
+      .tachijun-badge {
+        display: inline-block;
+        background-color: var(--gray);
+        color: white;
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-right: 8px;
+        font-family: monospace; /* 数字の幅を揃える */
+      }
       .team-header-row {
         padding: 0.8rem 1rem;
         background: rgba(0, 0, 0, 0.02);
@@ -383,9 +393,17 @@
           // チーム名ヘッダー
           const header = document.createElement('div');
           header.className = 'team-header-row';
+
+          // ★修正：立順バッジを追加
+          // 立順データがない場合は「-」にする
+          const tachijunNum = team.tachijun || '-';
+
           header.innerHTML = `
-                <span>${team.teamName}</span>
-                <span class="edit-icon">入力する</span>
+                <div style="display:flex; align-items:center;">
+                    <span class="tachijun-badge">${tachijunNum}</span>
+                    <span>${team.teamName}</span>
+                </div>
+                <span class="edit-icon">入力</span>
             `;
           card.appendChild(header);
 
@@ -422,11 +440,10 @@
         selectedTeam = team;
         tempScores = {}; // リセット
 
+        const tachijunText = team.tachijun ? `[立順:${team.tachijun}] ` : '';
         document.getElementById(
           'modal-team-name'
-        ).textContent = `${team.teamName} (${tabConfig[currentTab].label})`;
-        const container = document.getElementById('modal-inputs-container');
-        container.innerHTML = '';
+        ).textContent = `${tachijunText}${team.teamName} (${tabConfig[currentTab].label})`;
 
         const maxScore = tabConfig[currentTab].max;
 
