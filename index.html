@@ -219,6 +219,49 @@
         line-height: 20px;
       }
 
+      /* --- 更新ボタンのデザイン --- */
+      #reload-btn {
+        background-color: var(--white);
+        border: 1px solid #ccc;
+        color: var(--text-color);
+        padding: 0.4rem 0.8rem;
+        margin-left: 10px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-family: var(--font-main);
+        font-size: 0.9rem;
+        font-weight: bold;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      #reload-btn:hover {
+        background-color: #eee;
+        transform: translateY(-1px);
+      }
+
+      #reload-btn:active {
+        transform: translateY(1px);
+        background-color: #ddd;
+      }
+
+      /* アイコンの回転アニメーション */
+      @keyframes spin-icon {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .spinning {
+        animation: spin-icon 0.8s linear infinite;
+        display: inline-block; /* 回転させるために必要 */
+      }
+
       /* 変更案：アイスランドカラーに合わせたポジション色 */
       /* OKLCHで調整したポジション色 */
 
@@ -303,6 +346,11 @@
     <main>
       <div class="controls">
         <span class="status-badge">状況確認中...</span>
+
+        <button id="reload-btn" onclick="manualReload()">
+          <span id="reload-icon">↻</span> 更新
+        </button>
+
         <span style="margin-left: 10px; font-size: 0.9rem"
           >最終更新: <span id="last-updated">--:--</span></span
         >
@@ -452,6 +500,26 @@
           errorEl.style.display = 'block';
           errorEl.textContent = `読み込みエラー: ${error.message}`; // ユーザーに見せるメッセージ
         }
+      }
+      // ★追加：手動リロードボタンの処理
+      async function manualReload() {
+        const btn = document.getElementById('reload-btn');
+        const icon = document.getElementById('reload-icon');
+
+        // 1. ボタンを一時的に無効化（連打防止）
+        btn.disabled = true;
+
+        // 2. アイコンを回す
+        icon.classList.add('spinning');
+
+        // 3. データを再取得 (既存のinitApp関数を呼ぶ)
+        await initApp();
+
+        // 4. 少し待ってからアニメーションを止める（早すぎると残像感がないため）
+        setTimeout(() => {
+          icon.classList.remove('spinning');
+          btn.disabled = false;
+        }, 500);
       }
 
       // DOM読み込み完了後に実行
