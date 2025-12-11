@@ -89,12 +89,15 @@
 
       .status-badge {
         display: inline-block;
-        background: var(--accent-color);
+        background: var(--accent-color); /* デフォルト色 */
         color: white;
-        padding: 0.25rem 0.8rem;
+        padding: 0.3rem 1rem;
         border-radius: 20px;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         font-weight: bold;
+        font-family: var(--font-main); /* 丸ゴシック適用 */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease; /* 色がふわっと変わる */
       }
 
       /* --- Team Cards Grid --- */
@@ -299,7 +302,7 @@
 
     <main>
       <div class="controls">
-        <span class="status-badge">競技進行中</span>
+        <span class="status-badge">状況確認中...</span>
         <span style="margin-left: 10px; font-size: 0.9rem"
           >最終更新: <span id="last-updated">--:--</span></span
         >
@@ -403,22 +406,24 @@
           const json = await response.json();
 
           // GAS側でエラーが起きている場合のチェック
-          if (json.status === 'error') {
-            throw new Error(json.error || 'Server side error occurred');
-          }
+          if (json.status === 'error')
+            throw new Error(json.error || 'Server side error');
 
-          // HTML内の .status-badge クラスを持つ要素を探して書き換える
+          // --- ⬇︎ ★追加・修正：ステータスの表示更新処理 ⬇︎ ---
           const badgeEl = document.querySelector('.status-badge');
-          if (badgeEl && json.tournamentStatus) {
-            badgeEl.textContent = json.tournamentStatus;
 
-            // オマケ：ステータスによって色を変える（任意）
-            if (json.tournamentStatus.includes('終了')) {
-              badgeEl.style.backgroundColor = 'var(--gray)'; // 終了ならグレー
-            } else if (json.tournamentStatus.includes('休憩')) {
-              badgeEl.style.backgroundColor = '#eebb00'; // 休憩なら黄色
+          // GASからステータスが送られてきているかチェック
+          if (badgeEl && json.tournamentStatus) {
+            const statusText = json.tournamentStatus;
+            badgeEl.textContent = statusText;
+
+            // ステータスに合わせて色を変える（UX向上）
+            if (statusText.includes('終了')) {
+              badgeEl.style.backgroundColor = 'var(--gray)'; // グレー
+            } else if (statusText.includes('休憩')) {
+              badgeEl.style.backgroundColor = '#D4A017'; // 休憩はゴールド/黄色系
             } else {
-              badgeEl.style.backgroundColor = 'var(--accent-color)'; // それ以外(進行中)は赤
+              badgeEl.style.backgroundColor = 'var(--accent-color)'; // 進行中は赤（アクセントカラー）
             }
           }
 
